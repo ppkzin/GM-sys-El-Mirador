@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GM-sys · Condominio El Mirador</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F0EEE9;--border:#E2DED6;--border2:#C8C3BA;
+  --text:#1A1916;--text2:#6B6760;--text3:#9E9A94;
+  --blue:#1A5FA8;--blue-light:#E8F0FA;--blue-mid:#B8D0F0;
+  --amber:#9A6200;--amber-light:#FDF3DC;
+  --green:#2D6E3A;--green-light:#E8F5EC;
+  --red:#A02020;--red-light:#FDECEC;
+  --coral:#8B3A1A;--coral-light:#FAEDE6;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+
+/* ── Layout ── */
+#app{display:flex;min-height:100vh}
+#sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width 0.2s}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#content{flex:1;overflow-y:auto;padding:24px}
+
+/* ── Sidebar ── */
+.sidebar-header{padding:20px 18px 12px;border-bottom:1px solid var(--border)}
+.sidebar-logo{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.3px}
+.sidebar-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.nav-section{padding:12px 10px 4px;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:1px 8px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;font-weight:400;transition:all 0.15s;user-select:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-light);color:var(--blue);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-badge{margin-left:auto;background:var(--blue);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px}
+.sidebar-footer{margin-top:auto;padding:14px 10px;border-top:1px solid var(--border)}
+.user-pill{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);cursor:pointer}
+.user-pill:hover{background:var(--surface2)}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.avatar-blue{background:var(--blue-light);color:var(--blue)}
+.avatar-green{background:var(--green-light);color:var(--green)}
+.user-name{font-size:13px;font-weight:500}
+.user-role{font-size:11px;color:var(--text3)}
+
+/* ── Topbar ── */
+.topbar-title{font-size:15px;font-weight:500}
+.topbar-actions{display:flex;align-items:center;gap:12px}
+.icon-btn{width:34px;height:34px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all 0.15s;position:relative}
+.icon-btn:hover{background:var(--surface2);color:var(--text)}
+.icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.notif-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+
+/* ── Screens ── */
+.screen{display:none}
+.screen.active{display:block}
+
+/* ── Login ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:36px;width:340px;box-shadow:var(--shadow)}
+.login-logo{font-size:24px;font-weight:600;margin-bottom:4px}
+.login-tagline{font-size:13px;color:var(--text3);margin-bottom:28px}
+.login-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.role-btn{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:10px;cursor:pointer;text-align:center;transition:all 0.15s}
+.role-btn:hover,.role-btn.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
+.role-btn .role-icon{font-size:20px;margin-bottom:4px}
+.role-btn .role-name{font-size:12px;font-weight:500}
+.login-error{background:var(--red-light);color:var(--red);border:1px solid #F0C0C0;border-radius:var(--radius);padding:10px 12px;font-size:13px;margin-bottom:12px;display:none}
+
+/* ── Forms ── */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.form-label .req{color:var(--red)}
+input[type=text],input[type=email],input[type=password],select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);transition:border 0.15s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,95,168,0.1)}
+textarea{resize:vertical;min-height:80px}
+select{cursor:pointer}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;border:1px solid transparent}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#154E8F}
+.btn-secondary{background:var(--surface);color:var(--text2);border-color:var(--border)}
+.btn-secondary:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:#F0C0C0}
+.btn-success{background:var(--green-light);color:var(--green);border-color:#B8DCBE}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.card-sm{padding:14px 16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600}
+.card + .card{margin-top:12px}
+
+/* ── Metrics ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.metric-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+.metric-value{font-size:28px;font-weight:600;line-height:1}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.mv-blue{color:var(--blue)}
+.mv-amber{color:var(--amber)}
+.mv-green{color:var(--green)}
+.mv-red{color:var(--red)}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-ingresado{background:var(--blue-light);color:var(--blue)}
+.badge-proceso{background:var(--amber-light);color:var(--amber)}
+.badge-cerrado{background:var(--green-light);color:var(--green)}
+.badge-reclamo{background:var(--coral-light);color:var(--coral)}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* ── Table ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2)}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.1s;cursor:pointer}
+tbody tr:hover{background:var(--surface2)}
+tbody tr:last-child{border-bottom:none}
+td{padding:11px 12px;font-size:13px;vertical-align:middle}
+.td-id{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)}
+.td-title{font-weight:500;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-who{color:var(--text2)}
+
+/* ── Timeline ── */
+.timeline{padding:4px 0}
+.tl-item{display:flex;gap:12px;padding:8px 0;position:relative}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:7px;top:22px;bottom:-8px;width:1px;background:var(--border)}
+.tl-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--surface);flex-shrink:0;margin-top:3px}
+.tl-dot-blue{background:var(--blue)}
+.tl-dot-amber{background:#D4920A}
+.tl-dot-green{background:var(--green)}
+.tl-dot-gray{background:var(--border2)}
+.tl-body{}
+.tl-text{font-size:13px;color:var(--text);font-weight:500}
+.tl-meta{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ── Page header ── */
+.page-header{margin-bottom:20px}
+.page-title{font-size:20px;font-weight:600;letter-spacing:-0.2px}
+.page-sub{font-size:13px;color:var(--text3);margin-top:3px}
+
+/* ── Detail layout ── */
+.detail-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.detail-row:last-child{border-bottom:none}
+.detail-key{color:var(--text3);font-weight:500}
+.detail-val{font-weight:500;text-align:right}
+
+/* ── Notification rules ── */
+.rule-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);margin-bottom:8px}
+.rule-event{flex:1;font-size:13px;font-weight:500}
+.rule-dest{font-size:12px;color:var(--text2)}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:var(--radius-lg);font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.2);transform:translateY(80px);opacity:0;transition:all 0.3s;z-index:9999;max-width:300px}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── Divider ── */
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-state svg{width:40px;height:40px;stroke:var(--border2);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:12px}
+.empty-state p{font-size:13px}
+
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-xl);padding:28px;width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.15)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{width:28px;height:28px;border:none;background:var(--surface2);border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.modal-close:hover{background:var(--border);color:var(--text)}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ── File upload ── */
+.file-drop{border:1px dashed var(--border2);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;color:var(--text3);font-size:13px;transition:all 0.15s}
+.file-drop:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+
+/* responsive helpers */
+@media(max-width:900px){.form-grid{grid-template-columns:1fr}.metrics-grid{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#1A5FA8;color:#fff;font-size:11px;font-weight:600;padding:4px 16px;display:flex;align-items:center;gap:12px">
+  <span>GM-sys</span><span style="opacity:0.4">|</span>
+  <span>v0.0.4 — Nueva solicitud y detalle de caso</span>
+  <span style="margin-left:auto;opacity:0.6;font-weight:400">Condominio El Mirador</span>
+</div>
+<style>body{padding-top:26px}</style>
+
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">GM-sys</div>
+    <div class="login-tagline">Condominio El Mirador · Sistema de Gestión</div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">Ingresar como:</div>
+      <div class="login-roles">
+        <div class="role-btn selected" data-role="admin" onclick="selectRole('admin',this)">
+          <div class="role-icon">🏢</div>
+          <div class="role-name">Administrador</div>
+        </div>
+        <div class="role-btn" data-role="resident" onclick="selectRole('resident',this)">
+          <div class="role-icon">🏠</div>
+          <div class="role-name">Residente</div>
+        </div>
+      </div>
+    </div>
+    <div id="login-error" class="login-error">Credenciales incorrectas. Intenta nuevamente.</div>
+    <div class="form-group">
+      <label class="form-label">Correo electrónico</label>
+      <input type="email" id="login-email" placeholder="usuario@mirador.cl" value="admin@mirador.cl">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••" value="admin123">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Ingresar al sistema</button>
+    <div style="margin-top:14px;font-size:11px;color:var(--text3);text-align:center">
+      Demo: admin@mirador.cl / admin123 · residente@mirador.cl / res123
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP SHELL ═══════════════ -->
+<div id="app" style="display:none">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">GM-sys</div>
+      <div class="sidebar-sub">El Mirador</div>
+    </div>
+    <div id="nav-admin">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" onclick="showScreen('dashboard',this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Panel general
+      </div>
+      <div class="nav-item" onclick="showScreen('casos',this)">
+        <svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h3M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+        Bandeja de casos
+        <span class="nav-badge" id="badge-casos">5</span>
+      </div>
+      <div class="nav-item" onclick="showScreen('nueva',this)">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva solicitud
+      </div>
+      <div class="nav-section">Gestión</div>
+      <div class="nav-item" onclick="showScreen('historial',this)">
+        <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3M3.05 11a9 9 0 1 0 .5-3M3 4v4h4"/></svg>
+        Historial
+      </div>
+      <div class="nav-item" onclick="showScreen('notificaciones',this)">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notificaciones
+      </div>
+      <div class="nav-item" onclick="showScreen('residentes',this)">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Residentes
+      </div>
+    </div>
+    <div id="nav-resident" style="display:none">
+      <div class="nav-section">Mi cuenta</div>
+      <div class="nav-item active" onclick="showScreen('mis-casos',this)">
+        <svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h3M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+        Mis solicitudes
+      </div>
+      <div class="nav-item" onclick="showScreen('nueva',this)">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva solicitud
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="avatar avatar-blue" id="user-avatar">MA</div>
+        <div>
+          <div class="user-name" id="user-name">M. Herrera</div>
+          <div class="user-role" id="user-role">Administradora</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm btn-full" style="margin-top:8px" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <div class="topbar-title" id="topbar-title">Panel general</div>
+      <div class="topbar-actions">
+        <div class="icon-btn" onclick="showScreen('notificaciones',null)" title="Notificaciones">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+        </div>
+      </div>
+    </div>
+    <div id="content">
+
+      <!-- ── Dashboard ── -->
+      <div id="screen-dashboard" class="screen active">
+        <div class="page-header">
+          <div class="page-title">Bienvenida, Mabel</div>
+          <div class="page-sub">Resumen general del sistema · Condominio El Mirador</div>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Casos abiertos</div>
+            <div class="metric-value mv-blue" id="m-open">5</div>
+            <div class="metric-sub">pendientes de acción</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">En proceso</div>
+            <div class="metric-value mv-amber" id="m-proc">2</div>
+            <div class="metric-sub">siendo atendidos</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Cerrados este mes</div>
+            <div class="metric-value mv-green" id="m-closed">4</div>
+            <div class="metric-sub">resueltos satisfactoriamente</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Reclamos activos</div>
+            <div class="metric-value mv-red" id="m-claims">2</div>
+            <div class="metric-sub">requieren atención</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Casos recientes</div>
+              <button class="btn btn-secondary btn-sm" onclick="showScreen('casos',document.querySelector('[onclick*=casos]'))">Ver todos</button>
+            </div>
+            <div class="table-wrap">
+              <table id="dash-table"></table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Actividad reciente</div></div>
+            <div class="timeline" id="dash-timeline"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Bandeja de casos ── -->
+      <div id="screen-casos" class="screen">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">Bandeja de casos</div>
+            <div class="page-sub">Todas las solicitudes y reclamos del condominio</div>
+          </div>
+          <button class="btn btn-primary" onclick="showScreen('nueva',document.querySelector('[onclick*=nueva]'))">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Nueva solicitud
+          </button>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="search-input" placeholder="Buscar por título, folio o residente..." style="flex:1;min-width:200px" oninput="filterCases()">
+            <select id="filter-estado" onchange="filterCases()" style="width:160px">
+              <option value="">Todos los estados</option>
+              <option value="Ingresado">Ingresado</option>
+              <option value="En proceso">En proceso</option>
+              <option value="Cerrado">Cerrado</option>
+              <option value="Reclamo">Reclamo</option>
+            </select>
+            <select id="filter-tipo" onchange="filterCases()" style="width:150px">
+              <option value="">Todos los tipos</option>
+              <option value="Solicitud">Solicitud</option>
+              <option value="Reclamo">Reclamo</option>
+            </select>
+          </div>
+        </div>
+        <div class="card card-sm">
+          <div class="table-wrap">
+            <table id="casos-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Nueva solicitud ── -->
+      <div id="screen-nueva" class="screen">
+        <div class="page-header">
+          <div class="page-title">Nueva solicitud o reclamo</div>
+          <div class="page-sub">Complete los datos para registrar su caso</div>
+        </div>
+        <div class="card" style="max-width:680px">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Tipo de caso <span class="req">*</span></label>
+              <select id="new-tipo">
+                <option value="Solicitud">Solicitud de mantenimiento</option>
+                <option value="Reclamo">Reclamo / queja de convivencia</option>
+                <option value="Solicitud">Solicitud de servicios</option>
+                <option value="Solicitud">Solicitud de información</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoría <span class="req">*</span></label>
+              <select id="new-cat">
+                <option>Infraestructura</option>
+                <option>Áreas comunes</option>
+                <option>Convivencia</option>
+                <option>Servicios</option>
+                <option>Pagos y gastos comunes</option>
+                <option>Seguridad</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Título del caso <span class="req">*</span></label>
+            <input type="text" id="new-titulo" placeholder="Ej: Filtración en techo dormitorio principal">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción detallada <span class="req">*</span></label>
+            <textarea id="new-desc" rows="4" placeholder="Describa el problema o solicitud con el mayor detalle posible..."></textarea>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Unidad / departamento <span class="req">*</span></label>
+              <input type="text" id="new-ubicacion" placeholder="Ej: Dpto. 304, Torre A">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prioridad</label>
+              <select id="new-prioridad">
+                <option value="Normal">Normal</option>
+                <option value="Alta">Alta</option>
+                <option value="Urgente">Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Adjuntar documento o foto</label>
+            <div class="file-drop" onclick="fakeUpload()">
+              <svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              <div id="file-label">Haga clic para seleccionar archivo (JPG, PDF, PNG)</div>
+            </div>
+            <div class="form-hint">Tamaño máximo: 10 MB</div>
+          </div>
+          <hr class="divider">
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn btn-secondary" onclick="clearNewForm()">Limpiar formulario</button>
+            <button class="btn btn-primary" onclick="submitCase()">
+              <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              Enviar solicitud
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Detalle de caso ── -->
+      <div id="screen-detalle" class="screen">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-secondary btn-sm" onclick="showScreen('casos',null)">
+              <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              Volver
+            </button>
+            <div>
+              <div class="page-title" id="det-folio">Caso #0041</div>
+              <div class="page-sub" id="det-titulo-sub">Filtración en techo dpto. 304</div>
+            </div>
+          </div>
+          <div id="det-badge"></div>
+        </div>
+        <div class="detail-grid">
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header"><div class="card-title">Información del caso</div></div>
+              <div id="det-info"></div>
+              <hr class="divider">
+              <div class="form-group" id="estado-change-group">
+                <label class="form-label">Cambiar estado del caso</label>
+                <div style="display:flex;gap:8px">
+                  <select id="det-estado-sel" style="flex:1">
+                    <option>Ingresado</option>
+                    <option>En proceso</option>
+                    <option>Cerrado</option>
+                  </select>
+                  <button class="btn btn-primary btn-sm" onclick="updateCaseStatus()">Actualizar</button>
+                </div>
+              </div>
+            </div>
+            <div class="card" id="desc-card">
+              <div class="card-title" style="margin-bottom:10px">Descripción</div>
+              <div id="det-desc" style="font-size:13px;color:var(--text2);line-height:1.6"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Bitácora de seguimiento</div>
+            </div>
+            <div class="timeline" id="det-timeline"></div>
+            <hr class="divider">
+            <div class="form-group">
+              <label class="form-label">Agregar comentario</label>
+              <textarea id="new-comment" rows="3" placeholder="Escriba una actualización o comentario sobre el caso..."></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end">
+              <button class="btn btn-primary btn-sm" onclick="addComment()">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Registrar evento
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Historial ── -->
+      <div id="screen-historial" class="screen">
+        <div class="page-header">
+          <div class="page-title">Historial de casos</div>
+          <div class="page-sub">Registro completo de todas las solicitudes y reclamos</div>
+        </div>
+        <div class="card card-sm">
+          <div class="table-wrap">
+            <table id="hist-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Notificaciones ── -->
+      <div id="screen-notificaciones" class="screen">
+        <div class="page-header">
+          <div class="page-title">Notificaciones</div>
+          <div class="page-sub">Centro de alertas y configuración de destinatarios</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Alertas recientes</div>
+              <span class="badge badge-ingresado">3 nuevas</span>
+            </div>
+            <div id="notif-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Reglas de destinatarios</div></div>
+            <div id="rules-list"></div>
+            <hr class="divider">
+            <button class="btn btn-secondary btn-sm btn-full" onclick="showToast('Funcionalidad disponible en versión completa')">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M5 12h14"/></svg>
+              Agregar nueva regla
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Residentes ── -->
+      <div id="screen-residentes" class="screen">
+        <div class="page-header">
+          <div class="page-title">Residentes y propietarios</div>
+          <div class="page-sub">Directorio de usuarios registrados en el sistema</div>
+        </div>
+        <div class="card card-sm">
+          <div class="table-wrap">
+            <table id="res-table"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Mis casos (residente) ── -->
+      <div id="screen-mis-casos" class="screen">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="page-title">Mis solicitudes</div>
+            <div class="page-sub">Seguimiento de tus casos registrados</div>
+          </div>
+          <button class="btn btn-primary" onclick="showScreen('nueva',document.querySelector('[onclick*=nueva]'))">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Nueva solicitud
+          </button>
+        </div>
+        <div class="card card-sm">
+          <div class="table-wrap">
+            <table id="mis-table"></table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal detalle rápido -->
+<div id="modal-res" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-res-title">Residente</div>
+      <button class="modal-close" onclick="closeModal('modal-res')">✕</button>
+    </div>
+    <div id="modal-res-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-res')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ═══════ DATA ═══════
+let currentRole = 'admin';
+let currentCaseId = null;
+
+const cases = [
+  {id:'0041',tipo:'Solicitud',cat:'Infraestructura',titulo:'Filtración en techo dpto. 304',desc:'Desde el lunes 02/06 se observa humedad en el techo del dormitorio principal, posiblemente relacionada con las lluvias recientes. Se adjunta fotografía.',ubicacion:'Dpto. 304, Torre A',residente:'Juan Rojas',estado:'Ingresado',prioridad:'Alta',fecha:'02/06/2026',
+    timeline:[
+      {dot:'blue',text:'Caso ingresado al sistema con folio #0041',meta:'02/06/2026 · 09:14 · Sistema automático'},
+      {dot:'blue',text:'Notificación enviada a administración',meta:'02/06/2026 · 09:14 · Automático'},
+    ]
+  },
+  {id:'0040',tipo:'Reclamo',cat:'Convivencia',titulo:'Ruido excesivo en piso 5 horario nocturno',desc:'Se reportan ruidos molestos provenientes del departamento 501 entre las 23:00 y las 02:00 horas de manera reiterada durante la semana.',ubicacion:'Dpto. 201, Torre B',residente:'Patricia Muñoz',estado:'Reclamo',prioridad:'Normal',fecha:'01/06/2026',
+    timeline:[
+      {dot:'blue',text:'Reclamo ingresado',meta:'01/06/2026 · 20:31 · Sistema'},
+      {dot:'amber',text:'Caso asignado a administración para mediación',meta:'02/06/2026 · 10:00 · M. Herrera'},
+    ]
+  },
+  {id:'0039',tipo:'Solicitud',cat:'Infraestructura',titulo:'Ascensor Torre B fuera de servicio',desc:'El ascensor de la Torre B no funciona desde el día sábado. Se solicita revisión urgente ya que hay residentes con movilidad reducida.',ubicacion:'Torre B — área común',residente:'Admin',estado:'En proceso',prioridad:'Urgente',fecha:'31/05/2026',
+    timeline:[
+      {dot:'blue',text:'Caso ingresado',meta:'31/05/2026 · 08:00 · Admin'},
+      {dot:'amber',text:'Estado actualizado a En proceso',meta:'31/05/2026 · 08:30 · M. Herrera'},
+      {dot:'amber',text:'Técnico asignado, revisión programada para mañana',meta:'31/05/2026 · 09:00 · M. Herrera'},
+    ]
+  },
+  {id:'0038',tipo:'Solicitud',cat:'Servicios',titulo:'Solicitud de estacionamiento para visita',desc:'Se solicita autorización de estacionamiento de visita por 2 días para familiares.',ubicacion:'Dpto. 102, Torre A',residente:'Carlos Lagos',estado:'Cerrado',prioridad:'Normal',fecha:'28/05/2026',
+    timeline:[
+      {dot:'blue',text:'Solicitud ingresada',meta:'28/05/2026 · 14:00 · C. Lagos'},
+      {dot:'amber',text:'Autorización aprobada',meta:'28/05/2026 · 15:00 · M. Herrera'},
+      {dot:'green',text:'Caso cerrado satisfactoriamente',meta:'30/05/2026 · 10:00 · Sistema'},
+    ]
+  },
+  {id:'0037',tipo:'Reclamo',cat:'Áreas comunes',titulo:'Piscina con agua turbia desde hace 5 días',desc:'El agua de la piscina comunitaria presenta turbidez y olor inusual. No es apta para uso.',ubicacion:'Área común — piscina',residente:'Ana Soto',estado:'Ingresado',prioridad:'Alta',fecha:'30/05/2026',
+    timeline:[
+      {dot:'blue',text:'Reclamo ingresado',meta:'30/05/2026 · 11:00 · A. Soto'},
+    ]
+  },
+  {id:'0036',tipo:'Solicitud',cat:'Seguridad',titulo:'Cámara de seguridad entrada principal sin funcionar',desc:'La cámara principal del acceso vehicular está desconectada. Se solicita revisión.',ubicacion:'Entrada vehicular principal',residente:'Admin',estado:'En proceso',prioridad:'Alta',fecha:'29/05/2026',
+    timeline:[
+      {dot:'blue',text:'Caso ingresado',meta:'29/05/2026 · 08:00 · Admin'},
+      {dot:'amber',text:'Técnico contactado, esperando visita',meta:'29/05/2026 · 10:00 · M. Herrera'},
+    ]
+  },
+  {id:'0035',tipo:'Solicitud',cat:'Infraestructura',titulo:'Luz fundida en estacionamiento subterráneo',desc:'Varios tubos de luz fundidos en el nivel B1 del estacionamiento.',ubicacion:'Estacionamiento B1',residente:'Roberto Vera',estado:'Cerrado',prioridad:'Normal',fecha:'25/05/2026',
+    timeline:[
+      {dot:'blue',text:'Solicitud ingresada',meta:'25/05/2026'},
+      {dot:'green',text:'Luces reemplazadas. Caso cerrado.',meta:'27/05/2026 · M. Herrera'},
+    ]
+  },
+  {id:'0034',tipo:'Solicitud',cat:'Pagos y gastos comunes',titulo:'Consulta sobre cobro gastos comunes mayo',desc:'Se solicita detalle del cobro de gastos comunes de mayo, el monto difiere del mes anterior.',ubicacion:'Dpto. 405, Torre A',residente:'María Fernández',estado:'Cerrado',prioridad:'Normal',fecha:'20/05/2026',
+    timeline:[
+      {dot:'blue',text:'Consulta ingresada',meta:'20/05/2026'},
+      {dot:'green',text:'Se envió detalle por correo. Caso cerrado.',meta:'21/05/2026'},
+    ]
+  },
+];
+
+const residents = [
+  {nombre:'Juan Rojas',tipo:'Propietario',unidad:'Dpto. 304, Torre A',correo:'j.rojas@mail.com',tel:'+56 9 8123 4567',estado:'Activo'},
+  {nombre:'Patricia Muñoz',tipo:'Arrendataria',unidad:'Dpto. 201, Torre B',correo:'p.munoz@mail.com',tel:'+56 9 7234 5678',estado:'Activo'},
+  {nombre:'Carlos Lagos',tipo:'Propietario',unidad:'Dpto. 102, Torre A',correo:'c.lagos@mail.com',tel:'+56 9 6345 6789',estado:'Activo'},
+  {nombre:'Ana Soto',tipo:'Residente autorizada',unidad:'Dpto. 502, Torre B',correo:'a.soto@mail.com',tel:'+56 9 5456 7890',estado:'Activo'},
+  {nombre:'Roberto Vera',tipo:'Propietario',unidad:'Estacionamiento 12',correo:'r.vera@mail.com',tel:'+56 9 4567 8901',estado:'Activo'},
+  {nombre:'María Fernández',tipo:'Propietaria',unidad:'Dpto. 405, Torre A',correo:'m.fernandez@mail.com',tel:'+56 9 3678 9012',estado:'Activo'},
+];
+
+const notifications = [
+  {icon:'📋',text:'Nueva solicitud ingresada: Filtración dpto. 304',time:'Hace 2 horas',new:true},
+  {icon:'🔔',text:'Reclamo CU-0040: Ruido piso 5 — requiere atención',time:'Hace 5 horas',new:true},
+  {icon:'✅',text:'Caso #0035 cerrado correctamente',time:'27/05/2026',new:false},
+  {icon:'⚠️',text:'Caso #0039 sin actualización hace 48 horas',time:'02/06/2026',new:true},
+];
+
+const rules = [
+  {evento:'Nueva solicitud ingresada',dest:'Administrador + Conserjería',canal:'Correo electrónico'},
+  {evento:'Caso cerrado / resuelto',dest:'Residente solicitante',canal:'Correo electrónico'},
+  {evento:'Reclamo ingresado',dest:'Administrador + Comité',canal:'Correo y panel'},
+  {evento:'Caso sin actualización 48h',dest:'Administrador',canal:'Panel interno'},
+];
+
+// ═══════ AUTH ═══════
+function selectRole(role, el) {
+  currentRole = role;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  if(role==='admin'){
+    document.getElementById('login-email').value='admin@mirador.cl';
+    document.getElementById('login-pass').value='admin123';
+  } else {
+    document.getElementById('login-email').value='residente@mirador.cl';
+    document.getElementById('login-pass').value='res123';
+  }
+}
+
+function doLogin() {
+  const email=document.getElementById('login-email').value;
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  const validAdmin=email==='admin@mirador.cl'&&pass==='admin123';
+  const validRes=email==='residente@mirador.cl'&&pass==='res123';
+  if(!validAdmin&&!validRes){err.style.display='block';return;}
+  err.style.display='none';
+  currentRole=validAdmin?'admin':'resident';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  setupRole();
+  buildDashboard();
+  buildCasosTable(cases);
+  buildHistorial();
+  buildNotificaciones();
+  buildResidentes();
+  buildMisCasos();
+}
+
+function setupRole(){
+  if(currentRole==='admin'){
+    document.getElementById('nav-admin').style.display='block';
+    document.getElementById('nav-resident').style.display='none';
+    document.getElementById('user-avatar').textContent='MH';
+    document.getElementById('user-name').textContent='M. Herrera';
+    document.getElementById('user-role').textContent='Administradora';
+    showScreen('dashboard',document.querySelector('[onclick*=dashboard]'));
+  } else {
+    document.getElementById('nav-admin').style.display='none';
+    document.getElementById('nav-resident').style.display='block';
+    document.getElementById('user-avatar').textContent='JR';
+    document.getElementById('user-name').textContent='Juan Rojas';
+    document.getElementById('user-role').textContent='Residente · Dpto. 304';
+    showScreen('mis-casos',document.querySelector('#nav-resident .nav-item'));
+    document.getElementById('new-ubicacion').value='Dpto. 304, Torre A';
+  }
+}
+
+function doLogout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-email').value='admin@mirador.cl';
+  document.getElementById('login-pass').value='admin123';
+  document.getElementById('login-error').style.display='none';
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelector('[data-role=admin]').classList.add('selected');
+  currentRole='admin';
+}
+
+// ═══════ NAVIGATION ═══════
+function showScreen(name, navEl) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const s=document.getElementById('screen-'+name);
+  if(s) s.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  const titles={dashboard:'Panel general',casos:'Bandeja de casos',nueva:'Nueva solicitud',detalle:'Detalle del caso',historial:'Historial',notificaciones:'Notificaciones',residentes:'Residentes','mis-casos':'Mis solicitudes'};
+  document.getElementById('topbar-title').textContent=titles[name]||name;
+}
+
+// ═══════ BADGE HELPERS ═══════
+function badgeHtml(estado){
+  const map={Ingresado:'badge-ingresado','En proceso':'badge-proceso',Cerrado:'badge-cerrado',Reclamo:'badge-reclamo'};
+  return `<span class="badge ${map[estado]||'badge-ingresado'}"><span class="badge-dot"></span>${estado}</span>`;
+}
+
+// ═══════ DASHBOARD ═══════
+function buildDashboard(){
+  const open=cases.filter(c=>c.estado==='Ingresado').length;
+  const proc=cases.filter(c=>c.estado==='En proceso').length;
+  const closed=cases.filter(c=>c.estado==='Cerrado').length;
+  const claims=cases.filter(c=>c.estado==='Reclamo').length;
+  document.getElementById('m-open').textContent=open;
+  document.getElementById('m-proc').textContent=proc;
+  document.getElementById('m-closed').textContent=closed;
+  document.getElementById('m-claims').textContent=claims;
+  document.getElementById('badge-casos').textContent=open+proc+claims;
+
+  const recent=cases.slice(0,5);
+  document.getElementById('dash-table').innerHTML=`
+    <thead><tr><th>Folio</th><th>Título</th><th>Estado</th></tr></thead>
+    <tbody>${recent.map(c=>`<tr onclick="openCase('${c.id}')"><td class="td-id">#${c.id}</td><td class="td-title">${c.titulo}</td><td>${badgeHtml(c.estado)}</td></tr>`).join('')}</tbody>`;
+
+  const tl=document.getElementById('dash-timeline');
+  const events=[];
+  cases.forEach(c=>c.timeline.forEach(t=>events.push({...t,folio:c.id})));
+  tl.innerHTML=events.slice(-6).reverse().map(e=>`
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-${e.dot}"></div>
+      <div><div class="tl-text">${e.text}</div><div class="tl-meta">#${e.folio} · ${e.meta}</div></div>
+    </div>`).join('');
+}
+
+// ═══════ CASOS TABLE ═══════
+function buildCasosTable(data){
+  document.getElementById('casos-table').innerHTML=`
+    <thead><tr><th>Folio</th><th>Tipo</th><th>Título</th><th>Residente</th><th>Fecha</th><th>Estado</th><th>Prioridad</th></tr></thead>
+    <tbody>${data.map(c=>`<tr onclick="openCase('${c.id}')">
+      <td class="td-id">#${c.id}</td>
+      <td><span style="font-size:12px;color:var(--text3)">${c.tipo}</span></td>
+      <td class="td-title">${c.titulo}</td>
+      <td class="td-who">${c.residente}</td>
+      <td style="font-size:12px;color:var(--text3)">${c.fecha}</td>
+      <td>${badgeHtml(c.estado)}</td>
+      <td><span style="font-size:12px;color:${c.prioridad==='Urgente'?'var(--red)':c.prioridad==='Alta'?'var(--amber)':'var(--text3)'};font-weight:500">${c.prioridad}</span></td>
+    </tr>`).join('')}</tbody>`;
+}
+
+function filterCases(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const est=document.getElementById('filter-estado').value;
+  const tipo=document.getElementById('filter-tipo').value;
+  const filtered=cases.filter(c=>{
+    const matchQ=!q||c.titulo.toLowerCase().includes(q)||c.id.includes(q)||c.residente.toLowerCase().includes(q);
+    const matchE=!est||c.estado===est;
+    const matchT=!tipo||c.tipo===tipo;
+    return matchQ&&matchE&&matchT;
+  });
+  buildCasosTable(filtered);
+}
+
+// ═══════ CASE DETAIL ═══════
+function openCase(id){
+  const c=cases.find(x=>x.id===id);
+  if(!c) return;
+  currentCaseId=id;
+  document.getElementById('det-folio').textContent=`Caso #${c.id}`;
+  document.getElementById('det-titulo-sub').textContent=c.titulo;
+  document.getElementById('det-badge').innerHTML=badgeHtml(c.estado);
+  document.getElementById('det-desc').textContent=c.desc;
+  document.getElementById('det-info').innerHTML=`
+    <div class="detail-row"><span class="detail-key">N° folio</span><span class="detail-val">#${c.id}</span></div>
+    <div class="detail-row"><span class="detail-key">Tipo</span><span class="detail-val">${c.tipo}</span></div>
+    <div class="detail-row"><span class="detail-key">Categoría</span><span class="detail-val">${c.cat}</span></div>
+    <div class="detail-row"><span class="detail-key">Residente</span><span class="detail-val">${c.residente}</span></div>
+    <div class="detail-row"><span class="detail-key">Ubicación</span><span class="detail-val">${c.ubicacion}</span></div>
+    <div class="detail-row"><span class="detail-key">Fecha ingreso</span><span class="detail-val">${c.fecha}</span></div>
+    <div class="detail-row"><span class="detail-key">Prioridad</span><span class="detail-val">${c.prioridad}</span></div>`;
+  document.getElementById('det-estado-sel').value=c.estado==='Reclamo'?'Ingresado':c.estado;
+  document.getElementById('estado-change-group').style.display=currentRole==='admin'?'block':'none';
+  renderTimeline(c.timeline);
+  showScreen('detalle',null);
+}
+
+function renderTimeline(tl){
+  document.getElementById('det-timeline').innerHTML=tl.map(e=>`
+    <div class="tl-item">
+      <div class="tl-dot tl-dot-${e.dot}"></div>
+      <div><div class="tl-text">${e.text}</div><div class="tl-meta">${e.meta}</div></div>
+    </div>`).join('');
+}
+
+function updateCaseStatus(){
+  const c=cases.find(x=>x.id===currentCaseId);
+  if(!c) return;
+  const newStatus=document.getElementById('det-estado-sel').value;
+  const prev=c.estado;
+  c.estado=newStatus;
+  const now=new Date().toLocaleDateString('es-CL');
+  c.timeline.push({dot:newStatus==='Cerrado'?'green':'amber',text:`Estado actualizado: ${prev} → ${newStatus}`,meta:`${now} · M. Herrera`});
+  if(newStatus==='Cerrado') c.timeline.push({dot:'green',text:'Notificación de resolución enviada al residente',meta:`${now} · Automático`});
+  document.getElementById('det-badge').innerHTML=badgeHtml(c.estado);
+  renderTimeline(c.timeline);
+  buildDashboard();
+  buildCasosTable(cases);
+  showToast(`Estado actualizado a "${newStatus}" correctamente`);
+}
+
+function addComment(){
+  const c=cases.find(x=>x.id===currentCaseId);
+  const txt=document.getElementById('new-comment').value.trim();
+  if(!txt){showToast('Escribe un comentario antes de registrar');return;}
+  const now=new Date().toLocaleDateString('es-CL');
+  c.timeline.push({dot:'amber',text:txt,meta:`${now} · ${currentRole==='admin'?'M. Herrera':'J. Rojas'}`});
+  renderTimeline(c.timeline);
+  document.getElementById('new-comment').value='';
+  showToast('Comentario registrado en la bitácora');
+}
+
+// ═══════ NEW CASE ═══════
+function submitCase(){
+  const titulo=document.getElementById('new-titulo').value.trim();
+  const desc=document.getElementById('new-desc').value.trim();
+  const ubicacion=document.getElementById('new-ubicacion').value.trim();
+  if(!titulo||!desc||!ubicacion){showToast('Por favor completa los campos obligatorios (*)');return;}
+  const tipo=document.getElementById('new-tipo').value;
+  const cat=document.getElementById('new-cat').value;
+  const prior=document.getElementById('new-prioridad').value;
+  const newId=String(Number(cases[0].id)+1).padStart(4,'0');
+  const now=new Date().toLocaleDateString('es-CL');
+  const resName=currentRole==='admin'?'Admin':'Juan Rojas';
+  const newCase={
+    id:newId,tipo,cat,titulo,desc,ubicacion,residente:resName,
+    estado:'Ingresado',prioridad:prior,fecha:now,
+    timeline:[
+      {dot:'blue',text:`Caso ingresado al sistema con folio #${newId}`,meta:`${now} · Sistema automático`},
+      {dot:'blue',text:'Notificación enviada a administración',meta:`${now} · Automático`},
+    ]
+  };
+  cases.unshift(newCase);
+  clearNewForm();
+  buildDashboard();
+  buildCasosTable(cases);
+  buildHistorial();
+  buildMisCasos();
+  showToast(`Solicitud #${newId} enviada correctamente`);
+  showScreen(currentRole==='admin'?'casos':'mis-casos', document.querySelector(currentRole==='admin'?'[onclick*=casos]':'#nav-resident .nav-item'));
+}
+
+function clearNewForm(){
+  document.getElementById('new-titulo').value='';
+  document.getElementById('new-desc').value='';
+  if(currentRole!=='resident') document.getElementById('new-ubicacion').value='';
+  document.getElementById('file-label').textContent='Haga clic para seleccionar archivo (JPG, PDF, PNG)';
+}
+
+function fakeUpload(){
+  const names=['foto_problema.jpg','documento.pdf','captura.png'];
+  document.getElementById('file-label').textContent='✓ '+names[Math.floor(Math.random()*names.length)]+' — listo para enviar';
+}
+
+// ═══════ HISTORIAL ═══════
+function buildHistorial(){
+  document.getElementById('hist-table').innerHTML=`
+    <thead><tr><th>Folio</th><th>Tipo</th><th>Título</th><th>Residente</th><th>Fecha</th><th>Estado</th></tr></thead>
+    <tbody>${cases.map(c=>`<tr onclick="openCase('${c.id}')">
+      <td class="td-id">#${c.id}</td>
+      <td style="font-size:12px;color:var(--text3)">${c.tipo}</td>
+      <td class="td-title">${c.titulo}</td>
+      <td class="td-who">${c.residente}</td>
+      <td style="font-size:12px;color:var(--text3)">${c.fecha}</td>
+      <td>${badgeHtml(c.estado)}</td>
+    </tr>`).join('')}</tbody>`;
+}
+
+// ═══════ NOTIFICACIONES ═══════
+function buildNotificaciones(){
+  document.getElementById('notif-list').innerHTML=notifications.map(n=>`
+    <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start">
+      <span style="font-size:18px;flex-shrink:0">${n.icon}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:${n.new?'500':'400'};color:var(--text)">${n.text}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${n.time}</div>
+      </div>
+      ${n.new?'<span class="badge badge-ingresado">Nueva</span>':''}
+    </div>`).join('');
+  document.getElementById('rules-list').innerHTML=rules.map(r=>`
+    <div class="rule-row">
+      <div><div class="rule-event">${r.evento}</div><div class="rule-dest" style="margin-top:2px">${r.dest} · ${r.canal}</div></div>
+      <span class="badge badge-cerrado">Activa</span>
+    </div>`).join('');
+}
+
+// ═══════ RESIDENTES ═══════
+function buildResidentes(){
+  document.getElementById('res-table').innerHTML=`
+    <thead><tr><th>Nombre</th><th>Tipo</th><th>Unidad</th><th>Correo</th><th>Estado</th></tr></thead>
+    <tbody>${residents.map(r=>`<tr onclick="showResident('${r.nombre}')">
+      <td style="font-weight:500">${r.nombre}</td>
+      <td style="font-size:12px;color:var(--text3)">${r.tipo}</td>
+      <td class="td-who">${r.unidad}</td>
+      <td style="font-size:12px;color:var(--blue)">${r.correo}</td>
+      <td><span class="badge badge-cerrado">${r.estado}</span></td>
+    </tr>`).join('')}</tbody>`;
+}
+
+function showResident(nombre){
+  const r=residents.find(x=>x.nombre===nombre);
+  if(!r) return;
+  document.getElementById('modal-res-title').textContent=r.nombre;
+  document.getElementById('modal-res-body').innerHTML=`
+    <div class="detail-row"><span class="detail-key">Tipo</span><span class="detail-val">${r.tipo}</span></div>
+    <div class="detail-row"><span class="detail-key">Unidad</span><span class="detail-val">${r.unidad}</span></div>
+    <div class="detail-row"><span class="detail-key">Correo</span><span class="detail-val" style="color:var(--blue)">${r.correo}</span></div>
+    <div class="detail-row"><span class="detail-key">Teléfono</span><span class="detail-val">${r.tel}</span></div>
+    <div class="detail-row"><span class="detail-key">Estado</span><span class="detail-val">${r.estado}</span></div>
+    <div style="margin-top:14px;font-size:13px;font-weight:500;color:var(--text2)">Casos registrados</div>
+    <div style="margin-top:8px">${cases.filter(c=>c.residente===r.nombre).map(c=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="closeModal('modal-res');openCase('${c.id}')">
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">#${c.id}</span>
+        <span style="flex:1;font-size:13px">${c.titulo}</span>
+        ${badgeHtml(c.estado)}
+      </div>`).join('')||'<div style="color:var(--text3);font-size:13px;padding:8px 0">Sin casos registrados</div>'}</div>`;
+  document.getElementById('modal-res').classList.add('open');
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// ═══════ MIS CASOS ═══════
+function buildMisCasos(){
+  const myCases=cases.filter(c=>c.residente==='Juan Rojas'||c.residente==='Admin');
+  document.getElementById('mis-table').innerHTML=`
+    <thead><tr><th>Folio</th><th>Título</th><th>Fecha</th><th>Estado</th></tr></thead>
+    <tbody>${myCases.length?myCases.map(c=>`<tr onclick="openCase('${c.id}')">
+      <td class="td-id">#${c.id}</td>
+      <td class="td-title">${c.titulo}</td>
+      <td style="font-size:12px;color:var(--text3)">${c.fecha}</td>
+      <td>${badgeHtml(c.estado)}</td>
+    </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:30px">Sin solicitudes registradas</td></tr>'}</tbody>`;
+}
+
+// ═══════ TOAST ═══════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
